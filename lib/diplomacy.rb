@@ -1,0 +1,1 @@
+require 'diplomacy/province'
