@@ -3,7 +3,7 @@ Feature: Movement rules
   I want a computer program to handle all the orders and the board state
   In order to be able play diplomacy more often and learn cucumber
 
-  Scenario: Simple hold in one province world
+  Scenario: Simple hold
     Given the following board:
       | full name | province | type   | neighbors |
       | Vienna    | Vie      | inland |           |
@@ -24,7 +24,7 @@ Feature: Movement rules
     Austria: A Vie
     """
 
-  Scenario: Invalid hold in two province world
+  Scenario: Invalid hold because province doesn't contain a unit
     Given the following board:
       | full name | province | type   | neighbors |
       | Vienna    | Vie      | inland | Bud       |
@@ -40,6 +40,28 @@ Feature: Movement rules
     Then the order resolution report should be:
     """
     Austria: _A_Bud_Holds_
+    """
+    And there should be the following units:
+    """
+    Austria: A Vie
+    """
+
+  Scenario: Invalid hold because province does not exist
+    Given the following board:
+      | full name | province | type   | neighbors |
+      | Vienna    | Vie      | inland | Bud       |
+      | Budapest  | Bud      | inland | Vie       |
+    And there are the following units:
+    """
+    Austria: A Vie
+    """
+    When the following orders are resolved:
+    """
+    Austria: A Tri Holds
+    """
+    Then the order resolution report should be:
+    """
+    Austria: _A_Tri_Holds_
     """
     And there should be the following units:
     """
