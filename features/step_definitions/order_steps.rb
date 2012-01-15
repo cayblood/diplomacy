@@ -1,12 +1,12 @@
 Given /^the following board:$/ do |table|
-  @provinces = {}
+  @board = Board.new
   table.hashes.each do |row_hash|
-    @provinces[row_hash['province']] = Province.new(row_hash)
+    @board.add_province(Province.new(row_hash))
   end
 end
 
 Given /^there are the following units:$/ do |state_text|
-  @board = Board.new(state_text)
+  @board.set_unit_state(state_text)
 end
 
 When /^the following orders are resolved:$/ do |orders|
