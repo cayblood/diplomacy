@@ -26,6 +26,11 @@ class Board
     returnval
   end
 
+  def move_unit(power, current_province, destination_province)
+    unit = units[power].detect {|u| u.province == current_province }
+    unit.province = destination_province
+  end
+
   def resolve_orders(orders)
     orders = parse_orders(orders)
 
@@ -43,10 +48,7 @@ class Board
         order.fail! unless order.current_province.has_neighbor?(order.destination_province.abbreviation) if order.move?
 
         # carry out order if successful
-        if order.move? && !order.failed?
-          unit = units[power].detect {|u| u.province == order.current_province }
-          unit.province = order.destination_province
-        end
+        move_unit(power, order.current_province, order.destination_province) if order.move? && !order.failed?
       end
     end
 

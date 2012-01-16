@@ -7,6 +7,7 @@ class Province
   end
 
   def ==(other_province)
+    return false if other_province.nil?
     @name == other_province.name
   end
 
