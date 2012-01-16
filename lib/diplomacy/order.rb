@@ -1,12 +1,12 @@
 class Order
-  attr_accessor :unit_type, :current_province, :destination_province, :failed
+  attr_accessor :unit_type, :current_province, :destination_province, :destination_coast, :failed
 
   def initialize(order_line, board)
     @order_line = order_line.strip
     @failed = false
 
     # determine order type
-    matchdata = @order_line.match(/^(A|F) (\w+)(?: |-)(\w+)$/i)
+    matchdata = @order_line.match(/^(A|F)\s+(\w+)(?:\s+|-)(\w+)(?:\s+([NSEW]C))?$/i)
     if matchdata
       @unit_type = $1.upcase
       @current_province = board.parse_province($2)
@@ -15,6 +15,7 @@ class Order
         @destination_province = board.parse_province($3)
         @failed = true if @destination_province.nil?
       end
+      @destination_coast = $4.upcase if $4
     else
       @failed = true
     end

@@ -26,9 +26,10 @@ class Board
     returnval
   end
 
-  def move_unit(power, current_province, destination_province)
+  def move_unit(power, current_province, destination_province, coast = '')
     unit = units[power].detect {|u| u.province == current_province }
     unit.province = destination_province
+    unit.coast = coast || ''
   end
 
   def resolve_orders(orders)
@@ -38,17 +39,32 @@ class Board
       orders_for_power.each do |order|
         # ensure orders refer to valid units
         next if order.failed?
-        order.fail! unless @units[power].detect do |unit|
+        unit = @units[power].detect do |unit|
           unit.type == order.unit_type &&
           unit.province == order.current_province &&
           @provinces.has_key?(order.current_province.abbreviation)
         end
 
-        # ensure moves are between neighboring provinces
-        order.fail! unless order.current_province.has_neighbor?(order.destination_province.abbreviation) if order.move?
+        if unit
+          if order.move?
+            # ensure moves are between neighboring provinces
+            order.fail! unless order.current_province.has_neighbor?(order.destination_province.abbreviation)
+
+            # ensure unit type is allowed to move on this type of province
+            order.fail! if order.destination_province.type == 'water' && unit.army?
+            order.fail! if order.destination_province.type == 'inland' && unit.fleet?
+
+            # fail order if unit is a fleet and destination has coasts but a coast is not specified
+            order.fail! if unit.fleet? && order.destination_province.has_multiple_coasts? && !order.destination_coast
+          end
+        else
+          order.fail!
+        end
 
         # carry out order if successful
-        move_unit(power, order.current_province, order.destination_province) if order.move? && !order.failed?
+        if order.move? && !order.failed?
+          move_unit(power, order.current_province, order.destination_province, order.destination_coast)
+        end
       end
     end
 
