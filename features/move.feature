@@ -25,7 +25,7 @@ Feature: Move rules
     Austria: A Bud
     """
 
-  Scenario: Invalid move due to invalid destination
+  Scenario: Invalid move due to non-existent destination
     Given the following board:
       | full name | province | type   | neighbors |
       | Vienna    | Vie      | inland | Bud       |
@@ -41,6 +41,51 @@ Feature: Move rules
     Then the order resolution report should be:
     """
     Austria: _A_Vie-Tri_
+    """
+    And there should be the following units:
+    """
+    Austria: A Vie
+    """
+
+  Scenario: Invalid move due to unreachable destination
+    Given the following board:
+      | full name | province | type   | neighbors       |
+      | Vienna    | Vie      | inland | Bud             |
+      | Budapest  | Bud      | inland | Vie             |
+      | Paris     | Par      | inland | Pic,Bre,Gas,Bur |
+    And there are the following units:
+    """
+    Austria: A Vie
+    """
+    When the following orders are resolved:
+    """
+    Austria: A Vie-Par
+    """
+    Then the order resolution report should be:
+    """
+    Austria: _A_Vie-Par_
+    """
+    And there should be the following units:
+    """
+    Austria: A Vie
+    """
+
+  Scenario: Invalid move due to unit not being on designated starting point
+    Given the following board:
+      | full name | province | type   | neighbors |
+      | Vienna    | Vie      | inland | Bud       |
+      | Budapest  | Bud      | inland | Vie       |
+    And there are the following units:
+    """
+    Austria: A Vie
+    """
+    When the following orders are resolved:
+    """
+    Austria: A Bud-Vie
+    """
+    Then the order resolution report should be:
+    """
+    Austria: _A_Bud-Vie_
     """
     And there should be the following units:
     """
