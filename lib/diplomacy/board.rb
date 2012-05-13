@@ -75,12 +75,13 @@ class Board
       end
     end
 
+    # resolve moves
     moves.each do |destination, moves|
       if moves.size == 1
         move = moves.first
         order = move.shift
         move_unit(*move)
-      else
+      else # conflicts
         moves.each {|order, moves| order.fail! }
       end
     end
