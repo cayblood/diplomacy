@@ -29,3 +29,34 @@ Feature: Standoff rules
     Germany: A Ber
     Russia: A War
     """
+
+  Scenario: Simple standoff with army in the middle
+    Given the following board:
+      | full name | province | type    | neighbors |
+      | Berlin    | Ber      | coastal | Sil       |
+      | Silesia   | Sil      | inland  | Ber,War   |
+      | Warsaw    | War      | inland  | Sil       |
+    And there are the following units:
+    """
+    Germany: A Ber
+    Austria: A Sil
+    Russia: A War
+    """
+    When the following orders are resolved:
+    """
+    Germany: A Ber-Sil
+    Austria: A Sil-Holds
+    Russia: A War-Sil
+    """
+    Then the order resolution report should be:
+    """
+    Germany: _A_Ber-Sil_
+    Austria: A Sil-Holds
+    Russia: _A_War-Sil_
+    """
+    And there should be the following units:
+    """
+    Germany: A Ber
+    Austria: A Sil
+    Russia: A War
+    """
