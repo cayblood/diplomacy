@@ -35,6 +35,7 @@ class Board
   def resolve_orders(orders)
     orders = parse_orders(orders)
 
+    moves = Hash.new {|h, k| h[k] = [] }
     orders.each do |power, orders_for_power|
       orders_for_power.each do |order|
         # ensure orders refer to valid units
@@ -61,17 +62,33 @@ class Board
           order.fail!
         end
 
-        # carry out order if successful
+        # add to moves array to resolve conflicting moves later
         if order.move? && !order.failed?
-          move_unit(power, order.current_province, order.destination_province, order.destination_coast)
+          moves[order.destination_province] << [
+            order,
+            power,
+            order.current_province,
+            order.destination_province,
+            order.destination_coast
+          ]
         end
+      end
+    end
+
+    moves.each do |destination, moves|
+      if moves.size == 1
+        move = moves.first
+        order = move.shift
+        move_unit(*move)
+      else
+        moves.each {|order, moves| order.fail! }
       end
     end
 
     # concatenate the results
     orders.collect do |power, orders_for_power|
       "#{power}: #{orders_for_power.join}"
-    end.join
+    end.join("\n")
   end
 
   def parse_province(province_text)
@@ -86,6 +103,6 @@ class Board
   def unit_report
     @units.collect do |power, units|
       "#{power}: #{units.join(',')}"
-    end.join
+    end.join("\n")
   end
 end
