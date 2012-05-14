@@ -18,4 +18,13 @@ class Unit
   def army?
     @type == 'A'
   end
+
+  def can_move_to?(province)
+    # ensure moves are between neighboring provinces
+    returnval = true
+    returnval = false unless @province.has_neighbor?(province.abbreviation)
+    returnval = false if province.type == 'water' && army?
+    returnval = false if province.type == 'inland' && fleet?
+    returnval
+  end
 end

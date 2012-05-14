@@ -66,12 +66,8 @@ class Board
 
         if unit
           if order.move?
-            # ensure moves are between neighboring provinces
-            order.fail! unless order.current_province.has_neighbor?(order.destination_province.abbreviation)
-
-            # ensure unit type is allowed to move on this type of province
-            order.fail! if order.destination_province.type == 'water' && unit.army?
-            order.fail! if order.destination_province.type == 'inland' && unit.fleet?
+            # make sure provinces are connected and
+            order.fail! unless unit.can_move_to?(order.destination_province)
 
             # fail order if unit is a fleet and destination has coasts but a coast is not specified
             order.fail! if unit.fleet? && order.destination_province.has_multiple_coasts? && !order.destination_coast
