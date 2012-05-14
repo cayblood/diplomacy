@@ -37,10 +37,15 @@ class Board
     returnval
   end
 
-  def move_unit(power, current_province, destination_province, coast = '')
-    unit = units[power].detect {|u| u.province == current_province }
-    unit.province = destination_province
-    unit.coast = coast || ''
+  def execute_order(order)
+    if order.move?
+      unit = units[order.power].detect do |u|
+        u.province == order.current_province &&
+        u._type == order.unit_type
+      end
+      unit.province = order.destination_province
+      unit.coast = order.destination_coast || ''
+    end
   end
 
   def resolve_orders(orders)
@@ -54,7 +59,7 @@ class Board
         # ensure orders refer to valid units
         next if order.failed?
         unit = @units[power].detect do |unit|
-          unit.type == order.unit_type &&
+          unit._type == order.unit_type &&
           unit.province == order.current_province &&
           @provinces.has_key?(order.current_province.abbreviation)
         end
@@ -87,29 +92,32 @@ class Board
     end
 
     # resolve remaining holds and moves in the order of their dependency
-    unit_movements.each_strongly_connected_component do |source|
-      source = source.first
-      order = orders_by_current_province.fetch(source, nil)
-      next if order.nil? || order.hold?
-      source = order.current_province.abbreviation
-      dest = order.destination_province.abbreviation rescue nil
+    unit_movements.each_strongly_connected_component do |dependent_moves|
+      dependent_moves.each do |source|
+        order = orders_by_current_province.fetch(source, nil)
+        next if order.nil? || order.hold?
+        source = order.current_province.abbreviation
+        dest = order.destination_province.abbreviation rescue nil
 
-      # fail if someone is holding on destination
-      order.fail! if orders_by_current_province[dest] && orders_by_current_province[dest].hold?
+        # fail if someone is holding on destination
+        order.fail! if orders_by_current_province[dest] && orders_by_current_province[dest].hold?
 
-      # fail if someone on destination failed to move away
-      order.fail! if orders_by_current_province[dest] && orders_by_current_province[dest].failed?
+        # fail if someone on destination failed to move away
+        order.fail! if orders_by_current_province[dest] && orders_by_current_province[dest].failed?
 
-      # fail if anyone else is trying to enter destination
-      order.fail! if orders_by_current_province.select {|k, other_order|
-        other_order != order && other_order.move? && other_order.destination_province.abbreviation == dest
-      }.size > 0
+        # fail if anyone else is trying to enter destination
+        order.fail! if orders_by_current_province.select {|k, other_order|
+          other_order != order && other_order.move? && other_order.destination_province.abbreviation == dest
+        }.size > 0
 
-      unless order.failed?
-        move_unit(order.power,
-                  order.current_province,
-                  order.destination_province,
-                  order.destination_coast)
+        # fail if unit in destination is trying to enter source
+        if orders_by_current_province[dest] &&
+           orders_by_current_province[dest].move? &&
+           orders_by_current_province[dest].destination_province.abbreviation == source
+          order.fail!
+        end
+
+        execute_order(order) unless order.failed?
       end
     end
 

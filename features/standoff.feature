@@ -113,3 +113,25 @@ Feature: Standoff rules
     Germany: F Kie, A Ber
     Russia: A Pru
     """
+
+  Scenario: Standoff when units try to enter each other's territory without a convey
+    Given the following board:
+      | full name | province | type    | neighbors |
+      | Berlin    | Ber      | coastal | Pru       |
+      | Prussia   | Pru      | coastal | Ber       |
+    And there are the following units:
+    """
+    Germany: F Ber, A Pru
+    """
+    When the following orders are resolved:
+    """
+    Germany: F Ber-Pru, A Pru-Ber
+    """
+    Then the order resolution report should be:
+    """
+    Germany: _F_Ber-Pru_, _A_Pru-Ber_
+    """
+    And there should be the following units:
+    """
+    Germany: F Ber, A Pru
+    """

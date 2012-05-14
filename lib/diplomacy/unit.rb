@@ -1,21 +1,21 @@
 class Unit
-  attr_accessor :type, :province, :coast
+  attr_accessor :_type, :province, :coast
   def initialize(unit_text, board)
-    @type, province_text, coast_text = unit_text.split
-    @type.upcase!
+    @_type, province_text, coast_text = unit_text.strip.split
+    @_type.upcase!
     @province = board.parse_province(province_text)
     @coast = coast_text ? coast_text : ''
   end
 
   def to_s
-    "#{@type} #{@province.abbreviation} #{@coast}".strip
+    "#{@_type} #{@province.abbreviation} #{@coast}".strip
   end
 
   def fleet?
-    @type == 'F'
+    @_type == 'F'
   end
 
   def army?
-    @type == 'A'
+    @_type == 'A'
   end
 end

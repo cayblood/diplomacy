@@ -179,3 +179,30 @@ Feature: Move rules
     """
     France: F Spa NC
     """
+
+  Scenario: Three units rotating without trading places
+    Given the following board:
+      | full name | province | type    | neighbors |
+      | Holland   | Hol      | coastal | Nth,Bel   |
+      | Belgium   | Bel      | coastal | Hol,Nth   |
+      | North Sea | Nth      | water   | Hol,Bel   |
+    And there are the following units:
+    """
+    England: A Hol, F Bel
+    France: F Nth
+    """
+    When the following orders are resolved:
+    """
+    England: A Hol-Bel, F Bel-Nth
+    France: F Nth-Hol
+    """
+    Then the order resolution report should be:
+    """
+    England: A Hol-Bel, F Bel-Nth
+    France: F Nth-Hol
+    """
+    And there should be the following units:
+    """
+    England: A Bel, F Nth
+    France: F Hol
+    """
