@@ -41,7 +41,7 @@ class Board
     if order.move?
       unit = units[order.power].detect do |u|
         u.province == order.current_province &&
-        u._type == order.unit_type
+        u.type == order.unit_type
       end
       unit.province = order.destination_province
       unit.coast = order.destination_coast || ''
@@ -59,7 +59,7 @@ class Board
         # ensure orders refer to valid units
         next if order.failed?
         unit = @units[power].detect do |unit|
-          unit._type == order.unit_type &&
+          unit.type == order.unit_type &&
           unit.province == order.current_province &&
           @provinces.has_key?(order.current_province.abbreviation)
         end
