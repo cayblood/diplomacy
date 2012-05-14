@@ -1,5 +1,5 @@
 class Order
-  attr_accessor :unit_type, :current_province, :destination_province, :destination_coast, :failed
+  attr_accessor :unit_type, :current_province, :destination_province, :destination_coast, :failed, :power
 
   def initialize(order_line, board)
     @order_line = order_line.strip

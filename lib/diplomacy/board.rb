@@ -1,3 +1,14 @@
+require "tsort"
+
+class Hash
+ include TSort
+ alias tsort_each_node each_key
+ def tsort_each_child(node, &block)
+   dest = fetch(node, nil)
+   yield(dest) if dest
+ end
+end
+
 class Board
   attr_accessor :provinces, :units
 
@@ -35,9 +46,11 @@ class Board
   def resolve_orders(orders)
     orders = parse_orders(orders)
 
-    moves = Hash.new {|h, k| h[k] = [] }
+    unit_movements = {}
+    orders_by_current_province = {}
     orders.each do |power, orders_for_power|
       orders_for_power.each do |order|
+        order.power = power
         # ensure orders refer to valid units
         next if order.failed?
         unit = @units[power].detect do |unit|
@@ -62,33 +75,47 @@ class Board
           order.fail!
         end
 
-        # add to moves array to resolve conflicting moves later
+        orders_by_current_province[order.current_province.abbreviation] = order unless order.failed?
+
+        # add to unit_movements array to resolve conflicting moves later
         if order.move? && !order.failed?
-          moves[order.destination_province] << [
-            order,
-            power,
-            order.current_province,
-            order.destination_province,
-            order.destination_coast
-          ]
+          source = order.current_province.abbreviation
+          dest = order.destination_province.abbreviation
+          unit_movements[source] = dest
         end
       end
     end
 
-    # resolve moves
-    moves.each do |destination, moves|
-      if moves.size == 1
-        move = moves.first
-        order = move.shift
-        move_unit(*move)
-      else # conflicts
-        moves.each {|order, moves| order.fail! }
+    # resolve remaining holds and moves in the order of their dependency
+    unit_movements.each_strongly_connected_component do |source|
+      source = source.first
+      order = orders_by_current_province.fetch(source, nil)
+      next if order.nil? || order.hold?
+      source = order.current_province.abbreviation
+      dest = order.destination_province.abbreviation rescue nil
+
+      # fail if someone is holding on destination
+      order.fail! if orders_by_current_province[dest] && orders_by_current_province[dest].hold?
+
+      # fail if someone on destination failed to move away
+      order.fail! if orders_by_current_province[dest] && orders_by_current_province[dest].failed?
+
+      # fail if anyone else is trying to enter destination
+      order.fail! if orders_by_current_province.select {|k, other_order|
+        other_order != order && other_order.move? && other_order.destination_province.abbreviation == dest
+      }.size > 0
+
+      unless order.failed?
+        move_unit(order.power,
+                  order.current_province,
+                  order.destination_province,
+                  order.destination_coast)
       end
     end
 
     # concatenate the results
     orders.collect do |power, orders_for_power|
-      "#{power}: #{orders_for_power.join}"
+      "#{power}: #{orders_for_power.join(', ')}"
     end.join("\n")
   end
 
@@ -103,7 +130,7 @@ class Board
 
   def unit_report
     @units.collect do |power, units|
-      "#{power}: #{units.join(',')}"
+      "#{power}: #{units.join(', ')}"
     end.join("\n")
   end
 end
